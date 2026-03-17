@@ -2,15 +2,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// ตั้งค่า Firebase
+// อัปเดตข้อมูล Firebase อันใหม่ของคุณตรงนี้ครับ
 const firebaseConfig = {
-    apiKey: "AIzaSyAgWhjhHfUA5tjXNqo5Ci67mKVFhdw-62g",
-    authDomain: "planme-cb749.firebaseapp.com",
-    projectId: "planme-cb749",
-    storageBucket: "planme-cb749.firebasestorage.app",
-    messagingSenderId: "365862800805",
-    appId: "1:365862800805:web:20716ddab9a92c20e32c4c",
-    measurementId: "G-1DMXDB7DGS"
+  apiKey: "AIzaSyDZAcbv6IPBs1FzINqmNeuwsLeIxw6UbNg",
+  authDomain: "myplan-1d795.firebaseapp.com",
+  projectId: "myplan-1d795",
+  storageBucket: "myplan-1d795.firebasestorage.app",
+  messagingSenderId: "213850865909",
+  appId: "1:213850865909:web:a5071192adaf51253105bc",
+  measurementId: "G-DBZMZM7BEK"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -138,7 +138,8 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
 
     try {
         if (currentUser && !currentUser.isOffline) {
-            const appId = "1:365862800805:web:20716ddab9a92c20e32c4c"; 
+            // อัปเดต appId ให้ตรงกับ config อันใหม่ด้วยเพื่อไม่ให้เกิด Error ตอนบันทึก
+            const appId = "1:213850865909:web:a5071192adaf51253105bc"; 
             const dbPath = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'student_notes');
             await addDoc(dbPath, { grade, day: daysConfig.find(d => d.id === currentEditDay).name, time: timeSlots[currentEditSlot], subject, teacher, note, timestamp: serverTimestamp() });
         }
