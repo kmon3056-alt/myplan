@@ -2,15 +2,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// อัปเดตข้อมูล Firebase อันใหม่ล่าสุด (myplan-4bc52) ตรงนี้ครับ
+// อัปเดตข้อมูล Firebase อันใหม่ของคุณตรงนี้ครับ
 const firebaseConfig = {
-    apiKey: "AIzaSyDMXb8AiMZdfoHK2aK5TCuZzB90oVFdAGw",
-    authDomain: "myplan-4bc52.firebaseapp.com",
-    projectId: "myplan-4bc52",
-    storageBucket: "myplan-4bc52.firebasestorage.app",
-    messagingSenderId: "635539285791",
-    appId: "1:635539285791:web:61c7414d336c417d11f22a",
-    measurementId: "G-D8SCXPWDPC"
+  apiKey: "AIzaSyDZAcbv6IPBs1FzINqmNeuwsLeIxw6UbNg",
+  authDomain: "myplan-1d795.firebaseapp.com",
+  projectId: "myplan-1d795",
+  storageBucket: "myplan-1d795.firebasestorage.app",
+  messagingSenderId: "213850865909",
+  appId: "1:213850865909:web:a5071192adaf51253105bc",
+  measurementId: "G-DBZMZM7BEK"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -138,7 +138,52 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
 
     try {
         if (currentUser && !currentUser.isOffline) {
-            // อัปเดต appId ให้ตรงกับ config อันใหม่
-            const appId = "1:635539285791:web:61c7414d336c417d11f22a"; 
+            // อัปเดต appId ให้ตรงกับ config อันใหม่ด้วยเพื่อไม่ให้เกิด Error ตอนบันทึก
+            const appId = "1:213850865909:web:a5071192adaf51253105bc"; 
             const dbPath = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'student_notes');
             await addDoc(dbPath, { grade, day: daysConfig.find(d => d.id === currentEditDay).name, time: timeSlots[currentEditSlot], subject, teacher, note, timestamp: serverTimestamp() });
+        }
+        await saveToGoogleSheetsMock(grade, subject, teacher, note);
+        msg.style.color = "green"; msg.textContent = "อัปเดตข้อมูลสำเร็จ! 🎉";
+        setTimeout(() => { closeModal(); btn.disabled = false; btn.textContent = "บันทึกข้อมูล 💾"; }, 1000);
+    } catch (error) {
+        msg.style.color = "orange"; msg.textContent = "อัปเดตบนหน้าจอสำเร็จ (ระบบคลาวด์มีปัญหา)";
+        setTimeout(() => { closeModal(); btn.disabled = false; btn.textContent = "บันทึกข้อมูล 💾"; }, 1500);
+    }
+});
+
+function saveToGoogleSheetsMock(grade, subject, teacher, note) {
+    return new Promise(resolve => setTimeout(resolve, 600)); 
+}
+
+window.openDownloadModal = function() { document.getElementById('downloadModal').classList.add('active'); };
+window.closeDownloadModal = function() { document.getElementById('downloadModal').classList.remove('active'); };
+
+window.executeDownload = function(format) {
+    closeDownloadModal();
+    const editBtns = document.querySelectorAll('.edit-time-btn');
+    editBtns.forEach(btn => btn.style.display = 'none');
+    
+    html2canvas(document.getElementById('captureArea'), { scale: 2, backgroundColor: '#FFFFFF', logging: false }).then(canvas => {
+        editBtns.forEach(btn => btn.style.display = 'inline-block');
+        const link = document.createElement('a');
+        link.download = `ตารางเรียนของฉัน.${format}`; link.href = canvas.toDataURL(`image/${format}`, 0.9); link.click();
+    }).catch(err => {
+        alert("เกิดข้อผิดพลาดในการบันทึกรูปภาพ");
+        editBtns.forEach(btn => btn.style.display = 'inline-block');
+    });
+};
+
+async function initApp() {
+    try {
+        await signInAnonymously(auth);
+        onAuthStateChanged(auth, (user) => {
+            if (user) { currentUser = user; document.getElementById('loadingOverlay').style.display = 'none'; renderTable(); }
+        });
+    } catch (error) {
+        currentUser = { uid: "offline-mode", isOffline: true };
+        document.getElementById('loadingOverlay').style.display = 'none'; renderTable(); 
+    }
+}
+
+initApp();
