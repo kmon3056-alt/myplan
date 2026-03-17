@@ -1,59 +1,166 @@
-/* ตั้งค่าฟอนต์ */
-body { 
-    font-family: 'Prompt', sans-serif; 
-    background-image: radial-gradient(#cbd5e1 2px, transparent 2px);
-    background-size: 30px 30px;
+:root {
+    --bg-color: #FFF0F5; /* สีชมพูพาสเทลอ่อน */
+    --card-bg: #FFFFFF;
+    --primary-color: #FFB6C1;
+    --secondary-color: #87CEFA;
+    --text-color: #555555;
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
-.font-mali {
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
     font-family: 'Mali', cursive;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
 }
 
-/* สไตล์กล่องขอบดำหนา น่ารักๆ */
-.cute-box {
-    border: 4px solid #000;
-    border-radius: 16px;
-    box-shadow: 6px 6px 0px #000;
-    transition: all 0.2s ease;
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
-/* สไตล์ปุ่มกด */
-.cute-btn {
-    border: 3px solid #000;
-    border-radius: 12px;
-    box-shadow: 4px 4px 0px #000;
-    transition: all 0.1s ease;
+header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+header h1 {
+    color: #FF69B4;
+    font-size: 2.2rem;
+}
+
+.level-selector {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+select {
+    font-family: 'Mali', cursive;
+    font-size: 1.1rem;
+    padding: 10px 20px;
+    border: 2px solid var(--primary-color);
+    border-radius: 20px;
+    outline: none;
+    background-color: white;
     cursor: pointer;
 }
 
-.cute-btn:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 6px 6px 0px #000;
+/* ตารางเรียน */
+.schedule-container {
+    display: grid;
+    gap: 15px;
 }
 
-.cute-btn:active {
-    transform: translate(4px, 4px);
-    box-shadow: 0px 0px 0px #000;
+.day-card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: var(--shadow);
+    border-left: 8px solid var(--secondary-color);
 }
 
-/* สไตล์ช่องกรอกข้อมูล */
-.cute-input {
-    border: 3px solid #000;
+.day-title {
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: #4682B4;
+}
+
+.subject-list {
+    display: flex;
+    overflow-x: auto; /* เลื่อนซ้ายขวาบนมือถือได้ */
+    gap: 10px;
+    padding-bottom: 10px;
+}
+
+.subject-item {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 10px 15px;
     border-radius: 10px;
-    box-shadow: 3px 3px 0px #000;
-    transition: all 0.2s;
+    min-width: 120px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s;
 }
 
-.cute-input:focus {
-    outline: none;
-    border-color: #ec4899;
-    transform: translate(-1px, -1px);
-    box-shadow: 4px 4px 0px #ec4899;
+.subject-item:hover {
+    transform: scale(1.05);
 }
 
-/* กำหนดสีของแต่ละวันในตาราง */
-.day-จันทร์ { background-color: #fef08a; }
-.day-อังคาร { background-color: #fbcfe8; }
-.day-พุธ { background-color: #bbf7d0; }
-.day-พฤหัสบดี { background-color: #fed7aa; }
-.day-ศุกร์ { background-color: #bfdbfe; }
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    position: relative;
+}
+
+.close-btn {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #aaa;
+}
+
+textarea {
+    width: 100%;
+    font-family: 'Mali', cursive;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin: 15px 0;
+    resize: none;
+}
+
+.btn-primary {
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 1.1rem;
+    font-family: 'Mali', cursive;
+    cursor: pointer;
+    width: 100%;
+}
+
+.btn-primary:hover {
+    background-color: #5F9EA0;
+}
+
+.status-msg {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: green;
+}
