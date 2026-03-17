@@ -1,8 +1,8 @@
-// นำเข้า Firebase SDK (ใช้เวอร์ชัน 10 แบบ Module)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// 1. ตั้งค่า Firebase ตามที่คุณให้มา
+// ตั้งค่า Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyAgWhjhHfUA5tjXNqo5Ci67mKVFhdw-62g",
     authDomain: "planme-cb749.firebaseapp.com",
@@ -13,133 +13,279 @@ const firebaseConfig = {
     measurementId: "G-1DMXDB7DGS"
 };
 
-// เริ่มต้นใช้งาน Firebase และ Firestore
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
+let currentUser = null;
 
-// 2. ข้อมูลตารางเรียนจำลอง (Mock Data)
-const scheduleData = {
-    "จันทร์": ["คณิตศาสตร์", "ภาษาไทย", "วิทยาศาสตร์", "ศิลปะ"],
-    "อังคาร": ["ภาษาอังกฤษ", "สังคมศึกษา", "พละศึกษา", "คอมพิวเตอร์"],
-    "พุธ": ["วิทยาศาสตร์", "คณิตศาสตร์", "ประวัติศาสตร์", "ลูกเสือ/เนตรนารี"],
-    "พฤหัสบดี": ["ภาษาไทย", "ภาษาอังกฤษ", "ดนตรี", "แนะแนว"],
-    "ศุกร์": ["คอมพิวเตอร์", "คณิตศาสตร์", "สังคมศึกษา", "ชมรม"]
-};
+// ข้อมูลตารางเรียนตั้งต้น 7 คาบ + พักเที่ยง
+let timeSlots = [
+    "08:30 - 09:20", "09:20 - 10:10", "10:10 - 11:00", 
+    "11:00 - 11:50", "12:40 - 13:30", "13:30 - 14:20", "14:20 - 15:10"
+];
+let lunchTime = "11:50 - 12:40";
 
-// 3. จัดการ UI
-const scheduleContainer = document.getElementById('scheduleContainer');
-const noteModal = document.getElementById('noteModal');
-const closeModal = document.getElementById('closeModal');
-const modalSubjectName = document.getElementById('modalSubjectName');
-const noteText = document.getElementById('noteText');
-const saveNoteBtn = document.getElementById('saveNoteBtn');
-const statusMessage = document.getElementById('statusMessage');
-const gradeSelect = document.getElementById('gradeSelect');
+const daysConfig = [
+    { id: 'mon', name: 'จันทร์', className: 'row-mon' },
+    { id: 'tue', name: 'อังคาร', className: 'row-tue' },
+    { id: 'wed', name: 'พุธ', className: 'row-wed' },
+    { id: 'thu', name: 'พฤหัสบดี', className: 'row-thu' },
+    { id: 'fri', name: 'ศุกร์', className: 'row-fri' }
+];
 
-let currentSubject = "";
-let currentGrade = gradeSelect.value;
-
-gradeSelect.addEventListener('change', (e) => {
-    currentGrade = e.target.value;
-    // ในระบบจริงสามารถดึงข้อมูลตารางที่ต่างกันตามระดับชั้นได้ที่นี่
+let scheduleData = {};
+daysConfig.forEach(day => {
+    scheduleData[day.id] = Array(7).fill().map(() => ({ subject: "ว่าง", teacher: "-", note: "" }));
 });
 
-// ฟังก์ชันสร้างตารางเรียน
-function renderSchedule() {
-    scheduleContainer.innerHTML = '';
-    for (const [day, subjects] of Object.entries(scheduleData)) {
-        const dayCard = document.createElement('div');
-        dayCard.className = 'day-card';
-        
-        const dayTitle = document.createElement('div');
-        dayTitle.className = 'day-title';
-        dayTitle.textContent = day;
-        dayCard.appendChild(dayTitle);
+let currentEditDay = null;
+let currentEditSlot = null;
 
-        const subjectList = document.createElement('div');
-        subjectList.className = 'subject-list';
-
-        subjects.forEach(subject => {
-            const item = document.createElement('div');
-            item.className = 'subject-item';
-            item.textContent = subject;
-            item.onclick = () => openModal(subject);
-            subjectList.appendChild(item);
-        });
-
-        dayCard.appendChild(subjectList);
-        scheduleContainer.appendChild(dayCard);
+// สร้างหน้าตาตารางเรียน
+function renderTable() {
+    const timeHeaderRow = document.getElementById('timeHeaderRow');
+    timeHeaderRow.innerHTML = '<th class="day-col">วัน / เวลา</th>';
+    
+    // คาบเช้า
+    for(let i=0; i<4; i++) {
+        timeHeaderRow.appendChild(createTimeHeader(i, i+1));
     }
+
+    // คาบพักเที่ยง
+    const lunchTh = document.createElement('th');
+    lunchTh.className = 'lunch-header';
+    lunchTh.innerHTML = `
+        <div class="time-header">
+            <span>พักเที่ยง</span>
+            <span>${lunchTime}</span>
+            <button class="edit-time-btn" onclick="editLunchTime()">✏️ แก้ไข</button>
+        </div>
+    `;
+    timeHeaderRow.appendChild(lunchTh);
+
+    // คาบบ่าย
+    for(let i=4; i<7; i++) {
+        timeHeaderRow.appendChild(createTimeHeader(i, i+1));
+    }
+
+    const scheduleBody = document.getElementById('scheduleBody');
+    scheduleBody.innerHTML = '';
+    
+    daysConfig.forEach((day, dayIndex) => {
+        const tr = document.createElement('tr');
+        tr.className = day.className;
+        
+        const tdDay = document.createElement('td');
+        tdDay.className = 'day-col';
+        tdDay.textContent = day.name;
+        tr.appendChild(tdDay);
+
+        // วิชาเช้า
+        for(let i=0; i<4; i++) {
+            tr.appendChild(createSubjectCell(day.id, i));
+        }
+
+        // ช่องพักเที่ยง (ผสานเซลล์)
+        if (dayIndex === 0) {
+            const tdLunch = document.createElement('td');
+            tdLunch.rowSpan = 5;
+            tdLunch.className = 'lunch-cell';
+            tdLunch.innerHTML = '🍽️<br><br>พักรับประทานอาหาร';
+            tr.appendChild(tdLunch);
+        }
+
+        // วิชาบ่าย
+        for(let i=4; i<7; i++) {
+            tr.appendChild(createSubjectCell(day.id, i));
+        }
+
+        scheduleBody.appendChild(tr);
+    });
 }
 
-// เปิด/ปิด Modal
-function openModal(subject) {
-    currentSubject = subject;
-    modalSubjectName.textContent = `วิชา: ${subject}`;
-    noteText.value = '';
-    statusMessage.textContent = '';
-    noteModal.classList.remove('hidden');
+function createTimeHeader(index, periodNum) {
+    const th = document.createElement('th');
+    th.innerHTML = `
+        <div class="time-header">
+            <span>คาบ ${periodNum}</span>
+            <span>${timeSlots[index]}</span>
+            <button class="edit-time-btn" onclick="editTime(${index})">✏️ แก้ไข</button>
+        </div>
+    `;
+    return th;
 }
 
-closeModal.onclick = () => noteModal.classList.add('hidden');
+function createSubjectCell(dayId, index) {
+    const td = document.createElement('td');
+    const slotData = scheduleData[dayId][index];
+    td.innerHTML = `
+        <div class="subject-cell" onclick="openModal('${dayId}', ${index})">
+            <div class="subject-name">${slotData.subject}</div>
+            <div class="teacher-name">ครู: ${slotData.teacher}</div>
+        </div>
+    `;
+    return td;
+}
 
-// 4. ฟังก์ชันบันทึกข้อมูล
-saveNoteBtn.onclick = async () => {
-    const note = noteText.value.trim();
+// ผูกฟังก์ชันเข้ากับ Global Scope เพื่อให้ HTML เรียกใช้ได้
+window.editTime = function(index) {
+    const newTime = prompt(`แก้ไขเวลาคาบที่ ${index + 1}:`, timeSlots[index]);
+    if (newTime !== null && newTime.trim() !== "") {
+        timeSlots[index] = newTime.trim();
+        renderTable();
+    }
+};
+
+window.editLunchTime = function() {
+    const newTime = prompt(`แก้ไขเวลาพักเที่ยง:`, lunchTime);
+    if (newTime !== null && newTime.trim() !== "") {
+        lunchTime = newTime.trim();
+        renderTable();
+    }
+};
+
+window.openModal = function(dayId, slotIndex) {
+    currentEditDay = dayId;
+    currentEditSlot = slotIndex;
+    const data = scheduleData[dayId][slotIndex];
+    
+    document.getElementById('subjectInput').value = data.subject === "ว่าง" ? "" : data.subject;
+    document.getElementById('teacherInput').value = data.teacher === "-" ? "" : data.teacher;
+    document.getElementById('noteInput').value = data.note;
+    document.getElementById('statusMsg').textContent = "";
+    document.getElementById('statusMsg').style.color = "";
+    
+    document.getElementById('editModal').classList.add('active');
+};
+
+window.closeModal = function() {
+    document.getElementById('editModal').classList.remove('active');
+};
+
+document.getElementById('gradeSelect').addEventListener('change', (e) => {
+    document.getElementById('displayGradeTitle').textContent = `ตารางเรียน ชั้น ${e.target.value}`;
+});
+
+// บันทึกข้อมูล
+document.getElementById('saveBtn').addEventListener('click', async () => {
+    const subject = document.getElementById('subjectInput').value.trim() || "ว่าง";
+    const teacher = document.getElementById('teacherInput').value.trim() || "-";
+    const note = document.getElementById('noteInput').value.trim();
+    const grade = document.getElementById('gradeSelect').value;
+    
+    const btn = document.getElementById('saveBtn');
+    const msg = document.getElementById('statusMsg');
+
+    // อัปเดตหน้าจอทันที
+    scheduleData[currentEditDay][currentEditSlot] = { subject, teacher, note };
+    renderTable();
+
     if (!note) {
-        alert("กรุณาพิมพ์โน้ตก่อนบันทึกนะเด็กๆ 😅");
+        closeModal(); 
         return;
     }
 
-    saveNoteBtn.disabled = true;
-    saveNoteBtn.textContent = "กำลังบันทึก...";
+    btn.disabled = true;
+    btn.textContent = "กำลังบันทึก...";
 
     try {
-        // ก. บันทึกลง Firebase Firestore
-        await addDoc(collection(db, "student_notes"), {
-            grade: currentGrade,
-            subject: currentSubject,
-            note: note,
-            timestamp: serverTimestamp()
-        });
+        // ลองส่งไป Firebase
+        if (currentUser && !currentUser.isOffline) {
+            const appId = "1:365862800805:web:20716ddab9a92c20e32c4c"; 
+            const dbPath = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'student_notes');
+            await addDoc(dbPath, {
+                grade: grade,
+                day: daysConfig.find(d => d.id === currentEditDay).name,
+                time: timeSlots[currentEditSlot],
+                subject: subject,
+                teacher: teacher,
+                note: note,
+                timestamp: serverTimestamp()
+            });
+        }
 
-        // ข. จำลองการบันทึกลง Google Sheets
-        await saveToGoogleSheetsMock(currentGrade, currentSubject, note);
+        // จำลองส่งเข้า Google Sheets
+        await saveToGoogleSheetsMock(grade, subject, teacher, note);
 
-        statusMessage.textContent = "บันทึกสำเร็จแล้ว! 🎉";
+        msg.style.color = "green";
+        msg.textContent = "อัปเดตข้อมูลสำเร็จ! 🎉";
+        
         setTimeout(() => {
-            noteModal.classList.add('hidden');
-            saveNoteBtn.disabled = false;
-            saveNoteBtn.textContent = "บันทึกข้อมูล 💾";
-        }, 1500);
+            closeModal();
+            btn.disabled = false;
+            btn.textContent = "บันทึกข้อมูล 💾";
+        }, 1000);
 
     } catch (error) {
-        console.error("Error adding document: ", error);
-        statusMessage.textContent = "เกิดข้อผิดพลาด ลองใหม่อีกครั้งนะ";
-        statusMessage.style.color = "red";
-        saveNoteBtn.disabled = false;
-        saveNoteBtn.textContent = "บันทึกข้อมูล 💾";
+        console.error("Save Error: ", error);
+        msg.style.color = "orange";
+        msg.textContent = "อัปเดตบนหน้าจอสำเร็จ (ระบบคลาวด์มีปัญหา)";
+        setTimeout(() => {
+            closeModal();
+            btn.disabled = false;
+            btn.textContent = "บันทึกข้อมูล 💾";
+        }, 1500);
     }
-};
+});
 
-// ฟังก์ชันจำลองการยิงข้อมูลเข้า Google Sheets
-async function saveToGoogleSheetsMock(grade, subject, note) {
-    // หมายเหตุสำหรับการนำไปใช้จริง: 
-    // คุณต้องสร้าง Google Apps Script (doPost) ที่ผูกกับ Sheet ID: 102gpPD_GPsCRpF3zwN11k93T1XO6rrKa1i1XXkNR-04
-    // จากนั้นนำ Web App URL มาใส่แทนที่ MOCK_URL นี้
-    const sheetId = "102gpPD_GPsCRpF3zwN11k93T1XO6rrKa1i1XXkNR-04";
+function saveToGoogleSheetsMock(grade, subject, teacher, note) {
     const payload = {
-        sheet_id: sheetId,
-        grade: grade,
-        subject: subject,
-        note: note,
-        date: new Date().toISOString()
+        sheet_id: "102gpPD_GPsCRpF3zwN11k93T1XO6rrKa1i1XXkNR-04",
+        data: { grade, subject, teacher, note, date: new Date().toISOString() }
     };
-    
-    console.log("Simulating API Call to Google Sheets Web App with payload:", payload);
-    // สร้าง Promise จำลองเวลาโหลด 0.5 วินาที
-    return new Promise(resolve => setTimeout(resolve, 500));
+    return new Promise(resolve => setTimeout(resolve, 600)); 
 }
 
-// เรียกใช้งานเมื่อโหลดหน้าเว็บ
-renderSchedule();
+// ระบบดาวน์โหลด
+window.openDownloadModal = function() {
+    document.getElementById('downloadModal').classList.add('active');
+};
+
+window.closeDownloadModal = function() {
+    document.getElementById('downloadModal').classList.remove('active');
+};
+
+window.executeDownload = function(format) {
+    closeDownloadModal();
+    const editBtns = document.querySelectorAll('.edit-time-btn');
+    editBtns.forEach(btn => btn.style.display = 'none');
+
+    const captureArea = document.getElementById('captureArea');
+    
+    html2canvas(captureArea, {
+        scale: 2, 
+        backgroundColor: '#FFFFFF',
+        logging: false
+    }).then(canvas => {
+        editBtns.forEach(btn => btn.style.display = 'inline-block');
+        const link = document.createElement('a');
+        link.download = `ตารางเรียนของฉัน.${format}`;
+        link.href = canvas.toDataURL(`image/${format}`, 0.9);
+        link.click();
+    }).catch(err => {
+        console.error("Capture Error:", err);
+        alert("เกิดข้อผิดพลาดในการบันทึกรูปภาพ");
+        editBtns.forEach(btn => btn.style.display = 'inline-block');
+    });
+};
+
+// เริ่มต้นระบบ
+async function initApp() {
+    try {
+        await signInAnonymously(auth);
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('loadingOverlay').style.display = 'none';
+                renderTable();
+            }
+        });
+    } catch (error) {
+        // Fallback โหมดออฟไลน์
+        currentUser = { uid: "offline-mode", isOffline: true };
+        document.getElementById('loadingOverlay').style.display = 'none';
+        renderTable(); 
+    }
+}
+
+initApp();
