@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanMe - Classroom Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+    <h1>PlanMe Management</h1>
+
+    <div class="form-group">
+        <input type="text" id="studentId" placeholder="เลขประจำตัว">
+        <input type="text" id="studentName" placeholder="ชื่อนักเรียน">
+        <button id="btnSave">บันทึก</button>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>รหัส</th>
+                <th>ชื่อ-นามสกุล</th>
+                <th>จัดการ</th>
+            </tr>
+        </thead>
+        <tbody id="studentList">
+            </tbody>
+    </table>
+</div>
+
+<script type="module" src="script.js"></script>
+</body>
+</html>
