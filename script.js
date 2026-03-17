@@ -1,10 +1,8 @@
+// นำเข้า Firebase SDK (ใช้เวอร์ชัน 10 แบบ Module)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-// === ตั้งค่าต่างๆ ===
-// ถ้านำ URL จาก Google Apps Script มาแล้ว ให้นำมาใส่ในเครื่องหมายคำพูดด้านล่างนี้ได้เลยครับ
-const GOOGLE_SCRIPT_URL = ""; 
-
+// 1. ตั้งค่า Firebase ตามที่คุณให้มา
 const firebaseConfig = {
     apiKey: "AIzaSyAgWhjhHfUA5tjXNqo5Ci67mKVFhdw-62g",
     authDomain: "planme-cb749.firebaseapp.com",
@@ -15,127 +13,133 @@ const firebaseConfig = {
     measurementId: "G-1DMXDB7DGS"
 };
 
-// Initialize Firebase
+// เริ่มต้นใช้งาน Firebase และ Firestore
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ฟังก์ชันเปิด/ปิด Modal หน้าต่างเพิ่มข้อมูล
-window.toggleModal = (show) => {
-    document.getElementById('addModal').style.display = show ? 'flex' : 'none';
+// 2. ข้อมูลตารางเรียนจำลอง (Mock Data)
+const scheduleData = {
+    "จันทร์": ["คณิตศาสตร์", "ภาษาไทย", "วิทยาศาสตร์", "ศิลปะ"],
+    "อังคาร": ["ภาษาอังกฤษ", "สังคมศึกษา", "พละศึกษา", "คอมพิวเตอร์"],
+    "พุธ": ["วิทยาศาสตร์", "คณิตศาสตร์", "ประวัติศาสตร์", "ลูกเสือ/เนตรนารี"],
+    "พฤหัสบดี": ["ภาษาไทย", "ภาษาอังกฤษ", "ดนตรี", "แนะแนว"],
+    "ศุกร์": ["คอมพิวเตอร์", "คณิตศาสตร์", "สังคมศึกษา", "ชมรม"]
 };
 
-// ฟังก์ชันดึงข้อมูลจาก Firebase มาแสดงผล
-async function loadSchedules() {
-    const tbody = document.getElementById('scheduleBody');
-    tbody.innerHTML = '<tr><td colspan="5" class="text-center p-6 text-xl font-mali animate-pulse">กำลังโหลดข้อมูลตารางเรียน... ⏳</td></tr>';
-    
-    try {
-        const q = query(collection(db, "schedules"));
-        const querySnapshot = await getDocs(q);
-        
-        let html = '';
-        let lastTeacher = '';
-        let lastNote = '';
+// 3. จัดการ UI
+const scheduleContainer = document.getElementById('scheduleContainer');
+const noteModal = document.getElementById('noteModal');
+const closeModal = document.getElementById('closeModal');
+const modalSubjectName = document.getElementById('modalSubjectName');
+const noteText = document.getElementById('noteText');
+const saveNoteBtn = document.getElementById('saveNoteBtn');
+const statusMessage = document.getElementById('statusMessage');
+const gradeSelect = document.getElementById('gradeSelect');
 
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            // เอาคำว่าอีโมจิออกเพื่อใช้เช็คคลาส CSS สี
-            const rawDay = data.day.replace(/[^ก-๙a-zA-Z]/g, '').trim(); 
-            
-            lastTeacher = data.teacherName;
-            lastNote = data.note;
-            html += `
-                <tr class="border-b-4 border-black hover:bg-white transition-colors">
-                    <td class="p-3 border-r-4 border-black text-center font-bold text-lg day-${rawDay}">${data.day}</td>
-                    <td class="p-3 border-r-4 border-black text-center font-semibold text-blue-700">${data.time}</td>
-                    <td class="p-3 border-r-4 border-black text-center font-bold bg-white">${data.level}</td>
-                    <td class="p-3 border-r-4 border-black font-bold text-lg">${data.subject}</td>
-                    <td class="p-3 text-center font-bold bg-gray-100">${data.room}</td>
-                </tr>
-            `;
+let currentSubject = "";
+let currentGrade = gradeSelect.value;
+
+gradeSelect.addEventListener('change', (e) => {
+    currentGrade = e.target.value;
+    // ในระบบจริงสามารถดึงข้อมูลตารางที่ต่างกันตามระดับชั้นได้ที่นี่
+});
+
+// ฟังก์ชันสร้างตารางเรียน
+function renderSchedule() {
+    scheduleContainer.innerHTML = '';
+    for (const [day, subjects] of Object.entries(scheduleData)) {
+        const dayCard = document.createElement('div');
+        dayCard.className = 'day-card';
+        
+        const dayTitle = document.createElement('div');
+        dayTitle.className = 'day-title';
+        dayTitle.textContent = day;
+        dayCard.appendChild(dayTitle);
+
+        const subjectList = document.createElement('div');
+        subjectList.className = 'subject-list';
+
+        subjects.forEach(subject => {
+            const item = document.createElement('div');
+            item.className = 'subject-item';
+            item.textContent = subject;
+            item.onclick = () => openModal(subject);
+            subjectList.appendChild(item);
         });
 
-        if(html === '') html = '<tr><td colspan="5" class="text-center p-8 text-xl font-mali text-gray-500">ยังไม่มีตารางเรียน กดเพิ่มเลย! ✨</td></tr>';
-        tbody.innerHTML = html;
-
-        if(lastTeacher) {
-            document.getElementById('displayTeacherName').innerText = lastTeacher;
-            document.getElementById('displayNote').innerText = lastNote || "ไม่มีโน้ตเพิ่มเติม";
-            document.getElementById('teacherName').value = lastTeacher;
-            document.getElementById('teacherNote').value = lastNote;
-        }
-
-    } catch (error) {
-        console.error("Error:", error);
-        tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-red-500">โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่</td></tr>';
+        dayCard.appendChild(subjectList);
+        scheduleContainer.appendChild(dayCard);
     }
 }
 
-// ฟังก์ชันบันทึกข้อมูล
-document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    submitBtn.innerHTML = "⏳ กำลังบันทึก...";
-    submitBtn.disabled = true;
+// เปิด/ปิด Modal
+function openModal(subject) {
+    currentSubject = subject;
+    modalSubjectName.textContent = `วิชา: ${subject}`;
+    noteText.value = '';
+    statusMessage.textContent = '';
+    noteModal.classList.remove('hidden');
+}
 
-    const payload = {
-        teacherName: document.getElementById('teacherName').value,
-        note: document.getElementById('teacherNote').value,
-        day: document.getElementById('day').value,
-        time: document.getElementById('time').value,
-        level: document.getElementById('level').value,
-        room: document.getElementById('room').value,
-        subject: document.getElementById('subject').value,
-        timestamp: new Date()
-    };
+closeModal.onclick = () => noteModal.classList.add('hidden');
+
+// 4. ฟังก์ชันบันทึกข้อมูล
+saveNoteBtn.onclick = async () => {
+    const note = noteText.value.trim();
+    if (!note) {
+        alert("กรุณาพิมพ์โน้ตก่อนบันทึกนะเด็กๆ 😅");
+        return;
+    }
+
+    saveNoteBtn.disabled = true;
+    saveNoteBtn.textContent = "กำลังบันทึก...";
 
     try {
-        await addDoc(collection(db, "schedules"), payload);
+        // ก. บันทึกลง Firebase Firestore
+        await addDoc(collection(db, "student_notes"), {
+            grade: currentGrade,
+            subject: currentSubject,
+            note: note,
+            timestamp: serverTimestamp()
+        });
 
-        if(GOOGLE_SCRIPT_URL !== "") {
-            fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-        }
+        // ข. จำลองการบันทึกลง Google Sheets
+        await saveToGoogleSheetsMock(currentGrade, currentSubject, note);
 
-        toggleModal(false);
-        e.target.reset();
-        loadSchedules();
+        statusMessage.textContent = "บันทึกสำเร็จแล้ว! 🎉";
+        setTimeout(() => {
+            noteModal.classList.add('hidden');
+            saveNoteBtn.disabled = false;
+            saveNoteBtn.textContent = "บันทึกข้อมูล 💾";
+        }, 1500);
 
     } catch (error) {
-        alert('เกิดข้อผิดพลาด: ' + error.message);
-    } finally {
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
-    }
-});
-
-// ฟังก์ชันดาวน์โหลดภาพ
-window.exportSchedule = async (type) => {
-    const element = document.getElementById('captureArea');
-    const canvas = await html2canvas(element, { scale: 2, backgroundColor: "#ffffff" });
-    
-    if (type === 'png' || type === 'jpg') {
-        const link = document.createElement('a');
-        link.download = `ตารางเรียน_PlanMe.${type}`;
-        link.href = canvas.toDataURL(`image/${type === 'jpg' ? 'jpeg' : 'png'}`);
-        link.click();
-    } else if (type === 'pdf') {
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('l', 'mm', 'a4'); // 'l' = แนวนอน
-        const imgData = canvas.toDataURL('image/png');
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        
-        pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight);
-        pdf.save('ตารางเรียน_PlanMe.pdf');
+        console.error("Error adding document: ", error);
+        statusMessage.textContent = "เกิดข้อผิดพลาด ลองใหม่อีกครั้งนะ";
+        statusMessage.style.color = "red";
+        saveNoteBtn.disabled = false;
+        saveNoteBtn.textContent = "บันทึกข้อมูล 💾";
     }
 };
 
-// โหลดข้อมูลเมื่อเปิดเว็บ
-window.addEventListener('DOMContentLoaded', loadSchedules);
+// ฟังก์ชันจำลองการยิงข้อมูลเข้า Google Sheets
+async function saveToGoogleSheetsMock(grade, subject, note) {
+    // หมายเหตุสำหรับการนำไปใช้จริง: 
+    // คุณต้องสร้าง Google Apps Script (doPost) ที่ผูกกับ Sheet ID: 102gpPD_GPsCRpF3zwN11k93T1XO6rrKa1i1XXkNR-04
+    // จากนั้นนำ Web App URL มาใส่แทนที่ MOCK_URL นี้
+    const sheetId = "102gpPD_GPsCRpF3zwN11k93T1XO6rrKa1i1XXkNR-04";
+    const payload = {
+        sheet_id: sheetId,
+        grade: grade,
+        subject: subject,
+        note: note,
+        date: new Date().toISOString()
+    };
+    
+    console.log("Simulating API Call to Google Sheets Web App with payload:", payload);
+    // สร้าง Promise จำลองเวลาโหลด 0.5 วินาที
+    return new Promise(resolve => setTimeout(resolve, 500));
+}
+
+// เรียกใช้งานเมื่อโหลดหน้าเว็บ
+renderSchedule();
