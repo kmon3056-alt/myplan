@@ -3,24 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlanMe - ตารางเรียนของฉัน</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;600;700&family=Mali:wght@600&display=swap" rel="stylesheet">
+    <title>ระบบตารางเรียนออนไลน์สุดคิวท์ 🎒</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="p-4 md:p-8 bg-blue-50">
+<body>
+    <div class="container">
+        <header>
+            <h1>ตารางเรียนของฉัน 🐻✨</h1>
+            <p>เลือกระดับชั้นเพื่อดูตารางเรียนและจดการบ้านได้เลย!</p>
+        </header>
 
-    <div class="max-w-5xl mx-auto mb-8">
-        <div class="bg-white p-6 cute-box flex flex-col md:flex-row justify-between items-center gap-4 relative overflow-hidden">
-            <div class="flex items-center gap-4 z-10">
-                <img src="https://api.dicebear.com/7.x/fun-emoji/svg?seed=PlanMeKids" alt="Mascot" class="w-20 h-20 bg-yellow-200 rounded-full border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <div>
-                    <h1 class="text-3xl md:text-4xl font-bold text-pink-500 mb-2 font-mali tracking-wide">
-                        PlanMe ตารางเรียนสุดคิวท์ ✨
-                    </h1>
-                    <div class="text-lg font-semibold bg-blue-100 inline-block px-3 py-1 rounded-lg border-2 border-black">
-                        👨‍🏫 ครูผู้สอน: <span id="displayTeacherName" class="text-blue-700">กำลังโหลด...</span>
-                    </div>
-                    <div class="mt-2 text-gray-800 bg-yellow-100 p-2 cute-input inline-block text-sm">
-                        <i class="fa-solid fa-thumbtack text-red-500 mr-1"></i> โน้ต: <span id="displayNote
+        <div class="level-selector">
+            <select id="gradeSelect">
+                <option value="m1">มัธยมศึกษาปีที่ 1</option>
+                <option value="m2">มัธยมศึกษาปีที่ 2</option>
+                <option value="m3" selected>มัธยมศึกษาปีที่ 3</option>
+                <option value="m4">มัธยมศึกษาปีที่ 4</option>
+                <option value="m5">มัธยมศึกษาปีที่ 5</option>
+                <option value="m6">มัธยมศึกษาปีที่ 6</option>
+            </select>
+        </div>
+
+        <div class="schedule-container" id="scheduleContainer">
+            </div>
+    </div>
+
+    <div id="noteModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModal">&times;</span>
+            <h2 id="modalSubjectName">วิชา</h2>
+            <p>🐰 จดการบ้านหรือโน้ตเตือนความจำ:</p>
+            <textarea id="noteText" rows="4" placeholder="พิมพ์ข้อความที่นี่..."></textarea>
+            <button id="saveNoteBtn" class="btn-primary">บันทึกข้อมูล 💾</button>
+            <p id="statusMessage" class="status-msg"></p>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
