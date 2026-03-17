@@ -6,7 +6,6 @@
     <title>ระบบตารางเรียนออนไลน์ 🎒✨</title>
     <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -36,8 +35,13 @@
     <div class="capture-area" id="captureArea">
         <div class="schedule-title-display" id="displayGradeTitle">ตารางเรียน ชั้น ม.3</div>
         <table id="scheduleTable">
-            <thead><tr id="timeHeaderRow"><th>วัน / เวลา</th></tr></thead>
-            <tbody id="scheduleBody"></tbody>
+            <thead>
+                <tr id="timeHeaderRow">
+                    <th>วัน / เวลา</th>
+                </tr>
+            </thead>
+            <tbody id="scheduleBody">
+            </tbody>
         </table>
     </div>
 
@@ -67,8 +71,8 @@
             <span class="close-btn" onclick="closeDownloadModal()">&times;</span>
             <h2 class="modal-title">เลือกนามสกุลไฟล์ 📥</h2>
             <div class="download-btn-group">
-                <button class="btn-png" onclick="executeDownload('png')">โหลด .PNG</button>
-                <button class="btn-jpg" onclick="executeDownload('jpeg')">โหลด .JPEG</button>
+                <button class="btn-png" onclick="executeDownload('png')">ดาวน์โหลด .PNG</button>
+                <button class="btn-jpg" onclick="executeDownload('jpeg')">ดาวน์โหลด .JPEG</button>
             </div>
         </div>
     </div>
