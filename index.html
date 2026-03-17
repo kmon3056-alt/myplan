@@ -3,80 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบตารางเรียนออนไลน์ 🎒✨</title>
-    <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>ระบบตารางเรียน ม.3 🎒✨</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        :root { 
+            --bg: #FFF5F7; --pink: #FFB6C1; --text: #4A4A4A;
+            --mon: #FFF9C4; --tue: #F8BBD0; --wed: #C8E6C9; --thu: #FFE0B2; --fri: #B3E5FC; 
+        }
+        * { font-family: 'Mali', cursive; box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); padding: 20px; text-align: center; color: var(--text); }
+        h1 { color: #FF69B4; font-size: 2.2rem; margin-bottom: 20px; }
+        .btn { padding: 12px 25px; border-radius: 25px; border: none; cursor: pointer; color: white; background: #B19CD9; font-weight: bold; transition: 0.3s; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); }
+        .card { background: white; padding: 25px; border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); display: inline-block; min-width: 950px; }
+        table { width: 100%; border-collapse: separate; border-spacing: 6px; }
+        th, td { padding: 15px; border-radius: 15px; border: 1px solid #f9f9f9; }
+        th { background: #fafafa; font-size: 0.85rem; color: #999; }
+        .day-label { font-weight: bold; width: 110px; font-size: 1.2rem; }
+        .row-mon td:first-child { background: var(--mon); } .row-tue td:first-child { background: var(--tue); }
+        .row-wed td:first-child { background: var(--wed); } .row-thu td:first-child { background: var(--thu); }
+        .row-fri td:first-child { background: var(--fri); }
+        .slot { cursor: pointer; height: 95px; background: #fff; border: 2px dashed #eee; transition: 0.2s; vertical-align: middle; }
+        .slot:hover { border-color: var(--pink); background: #fff9fa; transform: scale(1.02); }
+        .sub-name { font-weight: bold; font-size: 1.1rem; color: #333; }
+        .lunch-cell { background: #FFCC80 !important; font-weight: bold; color: #E65100; vertical-align: middle !important; font-size: 1.4rem; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 35px; border-radius: 30px; width: 450px; text-align: left; }
+        input, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 2px solid #eee; font-family: 'Mali', cursive; outline: none; margin-top: 10px; margin-bottom: 20px; }
+        #loading { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .spinner { border: 6px solid #f3f3f3; border-top: 6px solid var(--pink); border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
 <body>
 
-    <div id="loadingOverlay">
+    <div id="loading">
         <div class="spinner"></div>
-        <h2>กำลังเตรียมระบบ... 🐻</h2>
+        <h3 style="margin-top:20px; color:#FF69B4">กำลังเชื่อมต่อฐานข้อมูล... 🐻✨</h3>
     </div>
 
-    <div class="header-container">
-        <h1>ตารางเรียนของฉัน 🎒✨</h1>
-        <p class="subtitle">คลิกที่รายวิชาเพื่อจดการบ้าน คลิกที่เวลาเพื่อแก้ไขได้เลย!</p>
-        
-        <div class="controls">
-            <select id="gradeSelect">
-                <option value="ม.1">มัธยมศึกษาปีที่ 1</option>
-                <option value="ม.2">มัธยมศึกษาปีที่ 2</option>
-                <option value="ม.3" selected>มัธยมศึกษาปีที่ 3</option>
-                <option value="ม.4">มัธยมศึกษาปีที่ 4</option>
-                <option value="ม.5">มัธยมศึกษาปีที่ 5</option>
-                <option value="ม.6">มัธยมศึกษาปีที่ 6</option>
-            </select>
-            <button class="btn-download-main" onclick="openDownloadModal()">📥 ดาวน์โหลดตารางเรียน</button>
-        </div>
-    </div>
-
-    <div class="capture-area" id="captureArea">
-        <div class="schedule-title-display" id="displayGradeTitle">ตารางเรียน ชั้น ม.3</div>
-        <table id="scheduleTable">
-            <thead>
-                <tr id="timeHeaderRow">
-                    <th>วัน / เวลา</th>
-                </tr>
-            </thead>
-            <tbody id="scheduleBody">
-            </tbody>
+    <h1>ตารางเรียน ม.3 🎒✨</h1>
+    <button class="btn" onclick="takeScreenshot()">📥 ดาวน์โหลดเป็นรูปภาพ</button>
+    
+    <div class="card" id="captureArea">
+        <h2 style="margin-bottom:20px; color:#555;">ตารางเรียน ชั้นมัธยมศึกษาปีที่ 3</h2>
+        <table>
+            <thead><tr id="timeHeader"><th>วัน / เวลา</th></tr></thead>
+            <tbody id="scheduleBody"></tbody>
         </table>
     </div>
 
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle" class="modal-title">แก้ไขข้อมูล 📝</h2>
-            <div class="input-group">
-                <label>📚 ชื่อวิชา:</label>
-                <input type="text" id="subjectInput" placeholder="เช่น คณิตศาสตร์">
-            </div>
-            <div class="input-group">
-                <label>👩‍🏫 ชื่อครูผู้สอน:</label>
-                <input type="text" id="teacherInput" placeholder="เช่น ครูใจดี">
-            </div>
-            <div class="input-group">
-                <label>🐰 โน้ต/การบ้าน:</label>
-                <textarea id="noteInput" placeholder="จดการบ้านเตือนความจำ..."></textarea>
-            </div>
-            <button class="btn-save" id="saveBtn">บันทึกข้อมูล 💾</button>
-            <div class="status-msg" id="statusMsg"></div>
+            <h2 style="text-align:center; color:var(--pink); margin-bottom:20px;">บันทึกข้อมูล 📝</h2>
+            <label>📚 ชื่อวิชา:</label><input id="subIn" placeholder="เช่น วิทยาการคำนวณ">
+            <label>👩‍🏫 ชื่อครู:</label><input id="teaIn" placeholder="เช่น ครูใจดี">
+            <label>🐰 โน้ต/การบ้าน:</label><textarea id="noteIn" placeholder="พิมพ์โน้ตตรงนี้ ข้อมูลจะถูกส่งไปที่ Firebase"></textarea>
+            <button class="btn" style="background:#77DD77; width:100%" onclick="saveToCloud()">บันทึกข้อมูล 💾</button>
+            <button class="btn" style="background:#eee; color:#888; width:100%; margin-top:10px" onclick="closeM()">ปิดหน้าต่าง</button>
         </div>
     </div>
 
-    <div id="downloadModal" class="modal">
-        <div class="modal-content text-center">
-            <span class="close-btn" onclick="closeDownloadModal()">&times;</span>
-            <h2 class="modal-title">เลือกนามสกุลไฟล์ 📥</h2>
-            <div class="download-btn-group">
-                <button class="btn-png" onclick="executeDownload('png')">ดาวน์โหลด .PNG</button>
-                <button class="btn-jpg" onclick="executeDownload('jpeg')">ดาวน์โหลด .JPEG</button>
-            </div>
-        </div>
-    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    <script type="module" src="script.js"></script>
+        // Firebase Config ของอาจารย์
+        const firebaseConfig = {
+            apiKey: "AIzaSyDMXb8AiMZdfoHK2aK5TCuZzB90oVFdAGw",
+            authDomain: "myplan-4bc52.firebaseapp.com",
+            projectId: "myplan-4bc52",
+            storageBucket: "myplan-4bc52.firebasestorage.app",
+            messagingSenderId: "635539285791",
+            appId: "1:635539285791:web:61c7414d336c417d11f22a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        let userUid = null;
+        let cDay, cSlot;
+
+        const times = ["08:30", "09:20", "10:10", "11:00", "12:40", "13:30", "14:20"];
+        const days = [{id:'mon',n:'จันทร์'},{id:'tue',n:'อังคาร'},{id:'wed',n:'พุธ'},{id:'thu',n:'พฤหัสบดี'},{id:'fri',n:'ศุกร์'}];
+        let scheduleData = JSON.parse(localStorage.getItem('m3_v2')) || {};
+
+        window.render = () => {
+            const h = document.getElementById('timeHeader');
+            h.innerHTML = '<th>วัน / เวลา</th>';
+            times.slice(0, 4).forEach((t, i) => h.innerHTML += `<th>คาบ ${i+1}<br>${t}</th>`);
+            h.innerHTML += `<th>พักเที่ยง<br>11:50</th>`;
+            times.slice(4).forEach((t, i) => h.innerHTML += `<th>คาบ ${i+5}<br>${t}</th>`);
+
+            const b = document.getElementById('scheduleBody');
+            b.innerHTML = '';
+            days.forEach((day, idx) => {
+                let row = `<tr class="row-${day.id}"><td class="day-label">${day.n}</td>`;
+                for(let i=0; i<4; i++) {
+                    const d = scheduleData[day.id]?.[i] || {s:'ว่าง', t:'-'};
+                    row += `<td class="slot" onclick="window.openM('${day.id}', ${i})"><div class="sub-name">${d.s}</div><div style="font-size:0.8rem;color:#aaa">${d.t}</div></td>`;
+                }
+                if(idx === 0) row += `<td rowspan="5" class="lunch-cell">พักเที่ยง</td>`;
+                for(let i=4; i<7; i++) {
+                    const d = scheduleData[day.id]?.[i] || {s:'ว่าง', t:'-'};
+                    row += `<td class="slot" onclick="window.openM('${day.id}', ${i})"><div class="sub-name">${d.s}</div><div style="font-size:0.8rem;color:#aaa">${d.t}</div></td>`;
+                }
+                b.innerHTML += row + '</tr>';
+            });
+        };
+
+        window.openM = (d, s) => { 
+            cDay=d; cSlot=s; 
+            const item = scheduleData[d]?.[s] || {};
+            document.getElementById('subIn').value = item.s === 'ว่าง' ? '' : (item.s || '');
+            document.getElementById('teaIn').value = item.t === '-' ? '' : (item.t || '');
+            document.getElementById('noteIn').value = item.n || '';
+            document.getElementById('editModal').classList.add('active'); 
+        };
+        
+        window.closeM = () => document.getElementById('editModal').classList.remove('active');
+
+        window.saveToCloud = async () => {
+            const s = document.getElementById('subIn').value || 'ว่าง';
+            const t = document.getElementById('teaIn').value || '-';
+            const n = document.getElementById('noteIn').value || '';
+            
+            if(!scheduleData[cDay]) scheduleData[cDay] = {};
+            scheduleData[cDay][cSlot] = { s, t, n };
+            localStorage.setItem('m3_v2', JSON.stringify(scheduleData));
+            window.render();
+            window.closeM();
+
+            if (userUid && n) {
+                try {
+                    await addDoc(collection(db, "notes"), {
+                        day: days.find(d => d.id === cDay).n,
+                        subject: s,
+                        note: n,
+                        timestamp: serverTimestamp()
+                    });
+                    console.log("บันทึก Cloud สำเร็จ!");
+                } catch (e) { console.error("Error: ", e); }
+            }
+        };
+
+        window.takeScreenshot = () => {
+            html2canvas(document.getElementById('captureArea')).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'ตารางเรียน.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        };
+
+        onAuthStateChanged(auth, u => {
+            if(u) {
+                userUid = u.uid;
+                document.getElementById('loading').style.display = 'none';
+                window.render();
+            }
+        });
+
+        signInAnonymously(auth).catch(() => {
+            document.getElementById('loading').style.display = 'none';
+            window.render();
+        });
+    </script>
 </body>
 </html>
