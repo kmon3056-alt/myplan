@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบตารางเรียน ม.3 🎒✨</title>
     
+    <!-- ฟอนต์ Mali และเครื่องมือ html2canvas -->
     <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
@@ -12,68 +13,170 @@
         :root { 
             --bg: #FFF5F7; --pink: #FFB6C1; --text: #4A4A4A;
             --mon: #FFF9C4; --tue: #F8BBD0; --wed: #C8E6C9; --thu: #FFE0B2; --fri: #B3E5FC; 
+            --paper: #FFF9C4; /* สีเหลืองกระดาษโน้ต */
         }
         * { font-family: 'Mali', cursive; box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg); padding: 20px; text-align: center; color: var(--text); }
-        h1 { color: #FF69B4; font-size: 2.2rem; margin-bottom: 20px; }
-        .btn { padding: 12px 25px; border-radius: 25px; border: none; cursor: pointer; color: white; background: #B19CD9; font-weight: bold; transition: 0.3s; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        body { background: var(--bg); color: var(--text); padding: 20px; min-height: 100vh; }
+
+        h1 { color: #FF69B4; font-size: 2.2rem; margin-bottom: 25px; text-align: center; }
+
+        /* จัดเลย์เอาท์แบ่งซ้าย-ขวา */
+        .container {
+            display: flex;
+            gap: 30px;
+            max-width: 1500px;
+            margin: 0 auto;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        /* ส่วนซ้าย: ปุ่ม + กระดาษโน้ต */
+        .left-panel {
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: sticky;
+            top: 20px;
+        }
+
+        .btn { 
+            padding: 12px 25px; border-radius: 25px; border: none; cursor: pointer; 
+            color: white; background: #B19CD9; font-weight: bold; transition: 0.3s; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); font-size: 1rem;
+        }
         .btn:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); }
-        .card { background: white; padding: 25px; border-radius: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); display: inline-block; min-width: 950px; }
-        table { width: 100%; border-collapse: separate; border-spacing: 6px; }
-        th, td { padding: 15px; border-radius: 15px; border: 1px solid #f9f9f9; }
-        th { background: #fafafa; font-size: 0.85rem; color: #999; }
-        .day-label { font-weight: bold; width: 110px; font-size: 1.2rem; }
+
+        /* ดีไซน์กระดาษโน้ต (Paper Note) */
+        .note-paper {
+            background: var(--paper);
+            padding: 30px 20px 20px;
+            border-radius: 2px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.1);
+            position: relative;
+            min-height: 350px;
+            transform: rotate(-1deg); /* เอียงเล็กน้อยให้ดูเป็นธรรมชาติ */
+            border-bottom-right-radius: 50px 5px;
+        }
+
+        /* เทปกาวด้านบนกระดาษ */
+        .note-paper::before {
+            content: "";
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .note-paper h3 { color: #8B7355; margin-bottom: 15px; text-align: center; font-size: 1.2rem; border-bottom: 1px dashed rgba(0,0,0,0.1); padding-bottom: 5px; }
+        .note-paper label { display: block; margin-top: 10px; font-weight: bold; font-size: 0.85rem; color: #8B7355; }
+        
+        .note-paper input, .note-paper textarea {
+            width: 100%; padding: 8px; border: none; background: transparent;
+            font-family: 'Mali'; outline: none; border-bottom: 1px solid rgba(0,0,0,0.05);
+            font-size: 1rem; color: #4A4A4A;
+        }
+        .note-paper textarea { height: 160px; resize: none; line-height: 1.5; }
+
+        /* ส่วนขวา: ตารางเรียน */
+        .main-content { flex: 1; min-width: 0; }
+        .card { 
+            background: white; padding: 25px; border-radius: 30px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.05); overflow-x: auto; 
+            width: 100%;
+        }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 5px; min-width: 850px; }
+        th, td { padding: 12px; border-radius: 15px; border: 1px solid #f9f9f9; text-align: center; }
+        th { background: #fafafa; font-size: 0.8rem; color: #999; }
+        
+        .day-label { font-weight: bold; width: 95px; font-size: 1.1rem; }
         .row-mon td:first-child { background: var(--mon); } .row-tue td:first-child { background: var(--tue); }
         .row-wed td:first-child { background: var(--wed); } .row-thu td:first-child { background: var(--thu); }
         .row-fri td:first-child { background: var(--fri); }
-        .slot { cursor: pointer; height: 95px; background: #fff; border: 2px dashed #eee; transition: 0.2s; vertical-align: middle; }
-        .slot:hover { border-color: var(--pink); background: #fff9fa; transform: scale(1.02); }
-        .sub-name { font-weight: bold; font-size: 1.1rem; color: #333; }
-        .lunch-cell { background: #FFCC80 !important; font-weight: bold; color: #E65100; vertical-align: middle !important; font-size: 1.4rem; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal.active { display: flex; }
-        .modal-content { background: white; padding: 35px; border-radius: 30px; width: 450px; text-align: left; }
-        input, textarea { width: 100%; padding: 12px; border-radius: 12px; border: 2px solid #eee; font-family: 'Mali', cursive; outline: none; margin-top: 10px; margin-bottom: 20px; }
+
+        .slot { 
+            cursor: pointer; height: 90px; background: #fff; 
+            border: 2px dashed #eee; transition: 0.2s; vertical-align: middle; 
+        }
+        .slot:hover, .slot.active { border-color: var(--pink); background: #fff9fa; transform: scale(1.02); }
+        .sub-name { font-weight: bold; font-size: 1rem; color: #333; }
+        .teacher-name { font-size: 0.75rem; color: #aaa; margin-top: 3px; }
+
+        .lunch-cell { background: #FFCC80 !important; font-weight: bold; color: #E65100; vertical-align: middle !important; font-size: 1.2rem; }
+
+        /* ฉากโหลด */
         #loading { position: fixed; inset: 0; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .spinner { border: 6px solid #f3f3f3; border-top: 6px solid var(--pink); border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; }
+        .spinner { border: 6px solid #f3f3f3; border-top: 6px solid var(--pink); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* หน้าจอเล็ก */
+        @media (max-width: 1200px) {
+            .container { flex-direction: column; align-items: center; }
+            .left-panel { width: 100%; max-width: 500px; position: static; }
+            .note-paper { transform: none; }
+        }
     </style>
 </head>
 <body>
 
     <div id="loading">
         <div class="spinner"></div>
-        <h3 style="margin-top:20px; color:#FF69B4">กำลังเชื่อมต่อฐานข้อมูล... 🐻✨</h3>
+        <h3 style="margin-top:20px; color:#FF69B4">กำลังเตรียมโต๊ะเรียน... 🐻✨</h3>
     </div>
 
     <h1>ตารางเรียน ม.3 🎒✨</h1>
-    <button class="btn" onclick="takeScreenshot()">📥 ดาวน์โหลดเป็นรูปภาพ</button>
-    
-    <div class="card" id="captureArea">
-        <h2 style="margin-bottom:20px; color:#555;">ตารางเรียน ชั้นมัธยมศึกษาปีที่ 3</h2>
-        <table>
-            <thead><tr id="timeHeader"><th>วัน / เวลา</th></tr></thead>
-            <tbody id="scheduleBody"></tbody>
-        </table>
+
+    <div class="container">
+        <!-- ส่วนซ้าย: ปุ่ม และ กระดาษโน้ต -->
+        <aside class="left-panel">
+            <button class="btn" onclick="takeScreenshot()">📥 ดาวน์โหลดตารางเป็นรูปภาพ</button>
+            
+            <div class="note-paper" id="notePaper">
+                <h3>บันทึกช่วยจำ 📝</h3>
+                <p id="hintText" style="text-align:center; color:#8B7355; font-size:0.9rem; margin-top: 20px;">คลิกเลือกวิชาในตาราง<br>เพื่อจดบันทึกลงกระดาษ</p>
+                
+                <div id="editorArea" style="display:none;">
+                    <p id="currentPos" style="font-weight:bold; color:#FF69B4; font-size:0.9rem; margin-bottom:10px; text-align:center;"></p>
+                    
+                    <label>📚 วิชา:</label>
+                    <input id="subIn" placeholder="...">
+                    
+                    <label>👩‍🏫 ครูผู้สอน:</label>
+                    <input id="teaIn" placeholder="...">
+                    
+                    <label>🐰 โน้ต / การบ้าน:</label>
+                    <textarea id="noteIn" placeholder="จดบันทึกที่นี่..."></textarea>
+                    
+                    <button class="btn" style="background:#77DD77; width:100%; margin-top:15px; font-size:0.9rem;" onclick="saveToCloud()">บันทึกข้อมูล 💾</button>
+                    <p id="saveStatus" style="text-align:center; font-size:0.8rem; margin-top:8px; color:#2E7D32; display:none; font-weight:bold;">บันทึกสำเร็จ! ✨</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ส่วนขวา: ตารางเรียน -->
+        <main class="main-content">
+            <div class="card" id="captureArea">
+                <h2 style="margin-bottom:20px; color:#555; font-size:1.3rem; text-align:center;">ตารางเรียน ชั้นมัธยมศึกษาปีที่ 3</h2>
+                <table>
+                    <thead><tr id="timeHeader"><th>วัน / เวลา</th></tr></thead>
+                    <tbody id="scheduleBody"></tbody>
+                </table>
+            </div>
+        </main>
     </div>
 
-    <div id="editModal" class="modal">
-        <div class="modal-content">
-            <h2 style="text-align:center; color:var(--pink); margin-bottom:20px;">บันทึกข้อมูล 📝</h2>
-            <label>📚 ชื่อวิชา:</label><input id="subIn" placeholder="เช่น วิทยาการคำนวณ">
-            <label>👩‍🏫 ชื่อครู:</label><input id="teaIn" placeholder="เช่น ครูใจดี">
-            <label>🐰 โน้ต/การบ้าน:</label><textarea id="noteIn" placeholder="พิมพ์โน้ตตรงนี้ ข้อมูลจะถูกส่งไปที่ Firebase"></textarea>
-            <button class="btn" style="background:#77DD77; width:100%" onclick="saveToCloud()">บันทึกข้อมูล 💾</button>
-            <button class="btn" style="background:#eee; color:#888; width:100%; margin-top:10px" onclick="closeM()">ปิดหน้าต่าง</button>
-        </div>
-    </div>
-
+    <!-- ================= JavaScript (Logic & Firebase) ================= -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Config ของอาจารย์
         const firebaseConfig = {
             apiKey: "AIzaSyDMXb8AiMZdfoHK2aK5TCuZzB90oVFdAGw",
             authDomain: "myplan-4bc52.firebaseapp.com",
@@ -90,8 +193,14 @@
         let cDay, cSlot;
 
         const times = ["08:30", "09:20", "10:10", "11:00", "12:40", "13:30", "14:20"];
-        const days = [{id:'mon',n:'จันทร์'},{id:'tue',n:'อังคาร'},{id:'wed',n:'พุธ'},{id:'thu',n:'พฤหัสบดี'},{id:'fri',n:'ศุกร์'}];
-        let scheduleData = JSON.parse(localStorage.getItem('m3_v2')) || {};
+        const days = [
+            {id:'mon',n:'จันทร์', full:'วันจันทร์'},{id:'tue',n:'อังคาร', full:'วันอังคาร'},
+            {id:'wed',n:'พุธ', full:'วันพุธ'},{id:'thu',n:'พฤหัส', full:'วันพฤหัสบดี'},
+            {id:'fri',n:'ศุกร์', full:'วันศุกร์'}
+        ];
+        
+        // ข้อมูลสำรอง
+        let scheduleData = JSON.parse(localStorage.getItem('m3_paper_v1')) || {};
 
         window.render = () => {
             const h = document.getElementById('timeHeader');
@@ -106,27 +215,38 @@
                 let row = `<tr class="row-${day.id}"><td class="day-label">${day.n}</td>`;
                 for(let i=0; i<4; i++) {
                     const d = scheduleData[day.id]?.[i] || {s:'ว่าง', t:'-'};
-                    row += `<td class="slot" onclick="window.openM('${day.id}', ${i})"><div class="sub-name">${d.s}</div><div style="font-size:0.8rem;color:#aaa">${d.t}</div></td>`;
+                    row += `<td id="cell-${day.id}-${i}" class="slot" onclick="window.selectCell('${day.id}', ${i})"><div class="sub-name">${d.s}</div><div class="teacher-name">${d.t}</div></td>`;
                 }
                 if(idx === 0) row += `<td rowspan="5" class="lunch-cell">พักเที่ยง</td>`;
                 for(let i=4; i<7; i++) {
                     const d = scheduleData[day.id]?.[i] || {s:'ว่าง', t:'-'};
-                    row += `<td class="slot" onclick="window.openM('${day.id}', ${i})"><div class="sub-name">${d.s}</div><div style="font-size:0.8rem;color:#aaa">${d.t}</div></td>`;
+                    row += `<td id="cell-${day.id}-${i}" class="slot" onclick="window.selectCell('${day.id}', ${i})"><div class="sub-name">${d.s}</div><div class="teacher-name">${d.t}</div></td>`;
                 }
                 b.innerHTML += row + '</tr>';
             });
         };
 
-        window.openM = (d, s) => { 
+        window.selectCell = (d, s) => { 
             cDay=d; cSlot=s; 
+            
+            // ไฮไลท์ช่องที่เลือก
+            document.querySelectorAll('.slot').forEach(el => el.classList.remove('active'));
+            const targetCell = document.getElementById(`cell-${d}-${s}`);
+            if(targetCell) targetCell.classList.add('active');
+
+            // แสดงส่วนจดบันทึกในกระดาษโน้ต
+            document.getElementById('hintText').style.display = 'none';
+            document.getElementById('editorArea').style.display = 'block';
+            document.getElementById('saveStatus').style.display = 'none';
+
+            const dayObj = days.find(day => day.id === d);
+            document.getElementById('currentPos').innerText = `${dayObj.full} คาบที่ ${s < 4 ? s+1 : s+1}`;
+
             const item = scheduleData[d]?.[s] || {};
             document.getElementById('subIn').value = item.s === 'ว่าง' ? '' : (item.s || '');
             document.getElementById('teaIn').value = item.t === '-' ? '' : (item.t || '');
             document.getElementById('noteIn').value = item.n || '';
-            document.getElementById('editModal').classList.add('active'); 
         };
-        
-        window.closeM = () => document.getElementById('editModal').classList.remove('active');
 
         window.saveToCloud = async () => {
             const s = document.getElementById('subIn').value || 'ว่าง';
@@ -135,27 +255,33 @@
             
             if(!scheduleData[cDay]) scheduleData[cDay] = {};
             scheduleData[cDay][cSlot] = { s, t, n };
-            localStorage.setItem('m3_v2', JSON.stringify(scheduleData));
+            localStorage.setItem('m3_paper_v1', JSON.stringify(scheduleData));
             window.render();
-            window.closeM();
+
+            // คืนค่าไฮไลท์
+            const targetCell = document.getElementById(`cell-${cDay}-${cSlot}`);
+            if(targetCell) targetCell.classList.add('active');
+
+            // แสดงสถานะบันทึกสำเร็จ
+            const status = document.getElementById('saveStatus');
+            status.style.display = 'block';
 
             if (userUid && n) {
                 try {
                     await addDoc(collection(db, "notes"), {
-                        day: days.find(d => d.id === cDay).n,
+                        day: days.find(day => day.id === cDay).full,
                         subject: s,
                         note: n,
                         timestamp: serverTimestamp()
                     });
-                    console.log("บันทึก Cloud สำเร็จ!");
-                } catch (e) { console.error("Error: ", e); }
+                } catch (e) { console.error("Firebase Error:", e); }
             }
         };
 
         window.takeScreenshot = () => {
-            html2canvas(document.getElementById('captureArea')).then(canvas => {
+            html2canvas(document.getElementById('captureArea'), { backgroundColor: '#FFFFFF', scale: 2 }).then(canvas => {
                 const link = document.createElement('a');
-                link.download = 'ตารางเรียน.png';
+                link.download = 'ตารางเรียน_ม3_ช่วยจำ.png';
                 link.href = canvas.toDataURL();
                 link.click();
             });
@@ -164,13 +290,13 @@
         onAuthStateChanged(auth, u => {
             if(u) {
                 userUid = u.uid;
-                document.getElementById('loading').style.display = 'none';
+                document.getElementById('loadingOverlay').style.display = 'none';
                 window.render();
             }
         });
 
         signInAnonymously(auth).catch(() => {
-            document.getElementById('loading').style.display = 'none';
+            document.getElementById('loadingOverlay').style.display = 'none';
             window.render();
         });
     </script>
